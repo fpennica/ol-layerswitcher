@@ -2,7 +2,11 @@
 
 Grouped layer list control for an OpenLayer map.
 
-All layers should have a `title` property and base layers should have a `type` property set to `base`. Group layers (`ol.layer.Group`) can be used to visually group layers together. See [examples/layerswitcher.js](examples/layerswitcher.js) for usage.
+To be shown in the layer switcher layers should have a `title` property; base
+layers should have a `type` property set to `base`. Group layers
+(`ol.layer.Group`) can be used to visually group layers together; a group with
+a `fold` property set to either `open` or `close` will be displayed with a
+toggle. See [Examples](#examples) for usage.
 
 Compatible with OpenLayers version 3, 4 and 5 (see note in [Install - Parcel,
 Webpack etc.](#parcel-webpack-etc) regarding installing the appropriate version
@@ -10,16 +14,20 @@ of `ol-layerswitcher` for OpenLayers).
 
 ## Examples
 
-The examples demonstrate usage and can be viewed online thanks to [RawGit](http://rawgit.com/):
+The examples demonstrate usage and can be viewed online thanks to [raw.githack.com](http://raw.githack.com/):
 
--   [Basic usage](http://rawgit.com/walkermatt/ol-layerswitcher/master/examples/layerswitcher.html)
-    -   Create a layer switcher control. Each layer to be displayed in the layer switcher has a `title` property as does each Group; each base map layer has a `type: 'base'` property.
--   [Add layer](http://rawgit.com/walkermatt/ol-layerswitcher/master/examples/addlayer.html)
+-   [Basic usage](http://raw.githack.com/walkermatt/ol-layerswitcher/master/examples/layerswitcher.html)
+    -   Create a layer switcher control. Each layer to be displayed in the layer switcher has a `title` property as does each Group; each base map layer has a `type: 'base'` property. See the comments in [examples/layerswitcher.js](./examples/layerswitcher.js) for other layer/ group options including `combine` and `fold`.
+-   [Add layer](http://raw.githack.com/walkermatt/ol-layerswitcher/master/examples/addlayer.html)
     -   Add a layer to an existing layer group after the layer switcher has been added to the map.
--   [Scrolling](http://rawgit.com/walkermatt/ol-layerswitcher/master/examples/scroll.html)
+-   [Scrolling](http://raw.githack.com/walkermatt/ol-layerswitcher/master/examples/scroll.html)
     -   Demonstrate the panel scrolling vertically, control the height of the layer switcher by setting the `max-height` (see [examples/scroll.css](examples/scroll.css)) and it's position relative to the bottom of the map (see the `.layer-switcher.shown` selector in [src/ol-layerswitcher.css](src/ol-layerswitcher.css)).
--   [Side bar](http://rawgit.com/walkermatt/ol-layerswitcher/master/examples/sidebar.html)
+-   [Side bar](http://raw.githack.com/walkermatt/ol-layerswitcher/master/examples/sidebar.html)
     -   Demonstrates rendering the layer tree into a [Turbo87/sidebar-v2](https://github.com/Turbo87/sidebar-v2) pane. This uses the static method [`LayerSwitcher.renderPanel`](#renderpanel) which can be used to render the layer tree to any arbitrary HTML element.
+-   [Collapse groups](http://raw.githack.com/walkermatt/ol-layerswitcher/master/examples/collapse-groups.html)
+    -   Demonstrates setting the `fold` property of a Group to allow the group to be collapsed.
+-   [Selectable Groups](http://raw.githack.com/walkermatt/ol-layerswitcher/master/examples/select-groups.html)
+    -   Demonstrates setting the [`groupSelectStyle`](#layerswitcher) option which determines if groups have a checkbox and how toggling a groups visibility affects it's children. The demo includes the ability to change the `groupSelectStyle` to easily see the affect of the different values.
 -   [Bundling with `ol` package (Browserify, Parcel, Webpack...)](https://github.com/walkermatt/ol-layerswitcher-examples)
     -   To use the layer switcher with the [`ol` package](https://www.npmjs.com/package/ol) and a module bundler such as Browserify, Parcel, Webpack etc. see [ol-layerswitcher-examples](https://github.com/walkermatt/ol-layerswitcher-examples).
 
@@ -34,13 +42,13 @@ The source for all examples can be found in [examples](examples).
 Load `ol-layerswitcher.js` after OpenLayers. The layerswitcher control is available as `LayerSwitcher` or `ol.control.LayerSwitcher`.
 
 ```HTML
-<script src="https://unpkg.com/ol-layerswitcher@3.0.0"></script>
+<script src="https://unpkg.com/ol-layerswitcher@3.3.0"></script>
 ```
 
 #### CSS
 
 ```HTML
-<link rel="stylesheet" href="https://unpkg.com/ol-layerswitcher@3.0.0/src/ol-layerswitcher.css" />
+<link rel="stylesheet" href="https://unpkg.com/ol-layerswitcher@3.3.0/src/ol-layerswitcher.css" />
 ```
 
 ### Parcel, Webpack etc.
@@ -86,15 +94,18 @@ Then run the tests by opening [test/index.html](test/index.html) in a browser.
 
 ### LayerSwitcher
 
-**Extends ol.control.Control**
+**Extends ol/control/Control~Control**
 
 OpenLayers Layer Switcher Control.
 See [the examples](./examples) for usage.
 
 **Parameters**
 
--   `opt_options` **[Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** Control options, extends olx.control.ControlOptions adding:  
-    **`tipLabel`** `String` - the button tooltip.
+-   `opt_options` **[Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** Control options, extends ol/control/Control~Control#options adding:
+    -   `opt_options.tipLabel` **[String](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** the button tooltip.
+    -   `opt_options.groupSelectStyle` **[String](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** either `'none'` - groups don't get a checkbox,
+          `'children'` (default) groups have a checkbox and affect child visibility or
+          `'group'` groups have a checkbox but do not alter child visibility (like QGIS).
 
 #### setMap
 
@@ -102,7 +113,7 @@ Set the map instance the control is associated with.
 
 **Parameters**
 
--   `map` **ol.Map** The map instance.
+-   `map` **ol/Map~Map** The map instance.
 
 #### showPanel
 
@@ -122,8 +133,9 @@ Re-draw the layer panel to represent the current state of the layers.
 
 **Parameters**
 
--   `map` **ol.Map** The OpenLayers Map instance to render layers for
+-   `map` **ol/Map~Map** The OpenLayers Map instance to render layers for
 -   `panel` **[Element](https://developer.mozilla.org/docs/Web/API/Element)** The DOM Element into which the layer tree will be rendered
+-   `options`  
 
 #### forEachRecursive
 
@@ -132,13 +144,13 @@ recursing nested groups.
 
 **Parameters**
 
--   `lyr` **ol.layer.Group** The layer group to start iterating from.
--   `fn` **[Function](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function)** Callback which will be called for each `ol.layer.Base`
-    found under `lyr`. The signature for `fn` is the same as `ol.Collection#forEach`
+-   `lyr` **ol/layer/Group~LayerGroup** The layer group to start iterating from.
+-   `fn` **[Function](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Statements/function)** Callback which will be called for each `ol/layer/Base~BaseLayer`
+    found under `lyr`. The signature for `fn` is the same as `ol/Collection~Collection#forEach`
 
 #### uuid
 
-**Static** Generate a UUID  
+**Static** Generate a UUID
 Adapted from <http://stackoverflow.com/a/2117523/526860>
 
 Returns **[String](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** UUID

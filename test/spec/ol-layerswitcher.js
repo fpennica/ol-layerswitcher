@@ -1,3 +1,4 @@
+
 describe('ol.control.LayerSwitcher', function() {
     var map, target, switcher;
 
@@ -9,7 +10,8 @@ describe('ol.control.LayerSwitcher', function() {
             target: target,
             layers: [
                 new ol.layer.Group({
-                    title: 'Base',
+                    title: 'Base-Group',
+                    fold: 'open',
                     layers: [
                         new ol.layer.Tile({
                             title: 'Foo',
@@ -35,7 +37,7 @@ describe('ol.control.LayerSwitcher', function() {
                 }),
                 // Combined base group
                 new ol.layer.Group({
-                    title: 'Combined-Base-Group',
+                    title: 'Combined-Base-Layer',
                     type: 'base',
                     combine: true,
                     layers: [
@@ -81,7 +83,7 @@ describe('ol.control.LayerSwitcher', function() {
                         })
                     ]
                 }),
-                // Group with no title (group and it's children should be ignored)
+                // Group with no title (group and its children should be ignored)
                 new ol.layer.Group({
                     layers: [
                         new ol.layer.Tile({
@@ -103,6 +105,7 @@ describe('ol.control.LayerSwitcher', function() {
                         })
                     ]
                 }),
+                // Top-level layer not in a group
                 new ol.layer.Tile({
                     title: 'Bar',
                     minResolution: 1000,
@@ -164,20 +167,20 @@ describe('ol.control.LayerSwitcher', function() {
             var titles = jQuery('.layer-switcher label').map(function() {
                 return jQuery(this).text();
             }).get();
-            expect(titles).to.eql(['Bar', 'Combined-Overlay-Group', 'Combined-Base-Group', 'Base', 'Too', 'Foo']);
+            expect(titles).to.eql(['Bar', 'Combined-Overlay-Group', 'Combined-Base-Layer', 'Base-Group', 'Too', 'Foo']);
         });
         it('only displays layers with a title', function() {
             switcher.showPanel();
             var elmTitles = jQuery('.layer-switcher label').map(function() {
                 return jQuery(this).text();
             }).get();
-            var lyrsWithTitle = shownLyrs(map.getLayerGroup());
+            var lyrsWithTitle = shownLyrs(map);
             expect(lyrsWithTitle.length).to.eql(elmTitles.length);
         });
         it('don\'t display layers without a title', function() {
             switcher.showPanel();
             // This is basically to ensure that our test layers include layers without a title
-            var lyrsWithoutTitle = _.filter(allLyrs(map.getLayerGroup()), function(lyr) {return !lyr.get('title')});
+            var lyrsWithoutTitle = _.filter(allLyrs(map), function(lyr) {return !lyr.get('title')});
             expect(lyrsWithoutTitle.length).not.to.equal(0);
         });
         it('displays normal layers as checkbox', function() {
@@ -204,7 +207,7 @@ describe('ol.control.LayerSwitcher', function() {
             var titles = jQuery('.layer-switcher input[type=radio]').siblings('label').map(function() {
                 return jQuery(this).text();
             }).get();
-            expect(titles).to.eql(['Combined-Base-Group', 'Too', 'Foo']);
+            expect(titles).to.eql(['Combined-Base-Layer', 'Too', 'Foo']);
         });
         it('should display uncombined groups without an input', function() {
             switcher.showPanel();
@@ -212,7 +215,7 @@ describe('ol.control.LayerSwitcher', function() {
             var titles = groups.map(function() {
                 return jQuery(this).text();
             }).get();
-            expect(titles).to.eql(['Base']);
+            expect(titles).to.eql(['Base-Group']);
             expect(groups.siblings('input').length).to.be(0);
         });
         it('should display combined groups with an input', function () {
@@ -220,7 +223,7 @@ describe('ol.control.LayerSwitcher', function() {
             var titles = jQuery('.layer-switcher label[for]').map(function() {
                 return jQuery(this).text();
             }).get();
-            expect(titles).to.contain('Combined-Base-Group');
+            expect(titles).to.contain('Combined-Base-Layer');
             expect(titles).to.contain('Combined-Overlay-Group');
         });
         it('should display combined groups without sub layers', function () {
@@ -233,7 +236,7 @@ describe('ol.control.LayerSwitcher', function() {
     describe('Overlay layer visibility', function() {
         it('Toggles overlay layer visibility on click', function() {
             switcher.showPanel();
-            var bar = getLayerByTitle('Bar');
+            var bar = getLayerByTitle(map, 'Bar');
             bar.setVisible(true);
             jQuery('.layer-switcher label:contains("Bar")').siblings('input').click();
             expect(bar.getVisible()).to.be(false);
@@ -247,9 +250,9 @@ describe('ol.control.LayerSwitcher', function() {
 
     describe('Base layer visibility', function() {
         it('Only one base layer is visible after renderPanel', function() {
-            var foo = getLayerByTitle('Foo');
-            var too = getLayerByTitle('Too');
-            var cbg = getLayerByTitle('Combined-Base-Group');
+            var foo = getLayerByTitle(map, 'Foo');
+            var too = getLayerByTitle(map, 'Too');
+            var cbg = getLayerByTitle(map, 'Combined-Base-Layer');
             var baseLayers = [foo, too, cbg];
             // Enable all base layers
             _.forEach(baseLayers, function (l) {
@@ -263,9 +266,9 @@ describe('ol.control.LayerSwitcher', function() {
             expect(visibleBaseLayerCount.true).to.be(1);
         });
         it('Only top most base layer is visible after renderPanel if more than one is visible', function() {
-            var foo = getLayerByTitle('Foo');
-            var too = getLayerByTitle('Too');
-            var cbg = getLayerByTitle('Combined-Base-Group');
+            var foo = getLayerByTitle(map, 'Foo');
+            var too = getLayerByTitle(map, 'Too');
+            var cbg = getLayerByTitle(map, 'Combined-Base-Layer');
             var baseLayers = [foo, too, cbg];
             // Enable all base layers
             _.forEach(baseLayers, function (l) {
@@ -275,7 +278,7 @@ describe('ol.control.LayerSwitcher', function() {
             expect(cbg.getVisible()).to.be(true);
         });
         it('Clicking on unchecked base layer shows it', function() {
-            var too = getLayerByTitle('Too');
+            var too = getLayerByTitle(map, 'Too');
             too.setVisible(false);
             switcher.renderPanel();
             jQuery('.layer-switcher label:contains("Too")').siblings('input').click();
@@ -283,7 +286,7 @@ describe('ol.control.LayerSwitcher', function() {
             expect(jQuery('.layer-switcher label:contains("Too")').siblings('input').get(0).checked).to.be(true);
         });
         it('Clicking on checked base layer does not change base layer', function() {
-            var foo = getLayerByTitle('Foo');
+            var foo = getLayerByTitle(map, 'Foo');
             foo.setVisible(true);
             switcher.renderPanel();
             jQuery('.layer-switcher label:contains("Foo")').siblings('input').click();
@@ -292,77 +295,43 @@ describe('ol.control.LayerSwitcher', function() {
         });
     });
 
+    describe('Folding', function() {
+        it('Child layers shown when group has fold: open', function() {
+            var baseGroup = getLayerByTitle(map, 'Base-Group');
+            baseGroup.set('fold', 'open');
+            switcher.renderPanel();
+            jQuery('.layer-switcher button').click();
+            expect(jQuery('.layer-switcher .panel:visible').length).to.be(1);
+            var baseGroupLi = jQuery(".layer-switcher label:contains('Base-Group')").parent();
+            expect(baseGroupLi.hasClass('layer-switcher-fold')).to.be(true);
+            expect(baseGroupLi.hasClass('layer-switcher-open')).to.be(true);
+            expect(baseGroupLi.hasClass('layer-switcher-close')).to.be(false);
+            // Determining if the content is visible or not is difficult as we simply set the
+            // height of the ul containing the child layers to 0 so jQuery's :hidden
+            // selector doesn't consider the element or it's children hidden even though
+            // they are not visible to the user. Here I'm using offsetHeight as suggested
+            // by https://davidwalsh.name/offsetheight-visibility
+            expect(baseGroupLi.find('ul').get(0).offsetHeight).to.be.greaterThan(0);
+        });
+        it('Child layers hidden when group has fold: close', function() {
+            var baseGroup = getLayerByTitle(map, 'Base-Group');
+            baseGroup.set('fold', 'close');
+            switcher.renderPanel();
+            jQuery('.layer-switcher button').click();
+            expect(jQuery('.layer-switcher .panel:visible').length).to.be(1);
+            var baseGroupLi = jQuery(".layer-switcher label:contains('Base-Group')").parent();
+            expect(baseGroupLi.hasClass('layer-switcher-fold')).to.be(true);
+            expect(baseGroupLi.hasClass('layer-switcher-open')).to.be(false);
+            expect(baseGroupLi.hasClass('layer-switcher-close')).to.be(true);
+            // See above comment on use of offsetHeight
+            expect(baseGroupLi.find('ul').get(0).offsetHeight).to.be(0);
+        });
+    });
+
     describe('Removes cleanly', function() {
         it('Removes cleanly when ol.Map#removeControl is called', function() {
             map.removeControl(switcher);
         });
     });
-
-    /**
-     * Returns the title of a given layer or null if lyr is falsey
-     */
-    function lyrTitle(lyr) {
-        return (lyr) ? lyr.get('title') : null;
-    }
-
-    /**
-     * Returns the Layer instance that has the given title
-     */
-    function getLayerByTitle(title) {
-        var layer = null;
-        ol.control.LayerSwitcher.forEachRecursive(map, function(lyr) {
-            if (lyr.get('title') && lyr.get('title') === title) {
-                layer = lyr;
-                return;
-            }
-        });
-        return layer;
-    }
-
-    /**
-     * Return a flattened Array of all layers regardless including those not
-     * shown by the LayerSwitcher
-     */
-    function allLyrs(lyrs) {
-        return flatten(lyrs, function (lyr) {
-            return (lyr.getLayers) ? lyr.getLayers().getArray() : lyr;
-        });
-    }
-
-    /**
-     * Return a flattened Array of only those layers that the LayerSwitcher
-     * should show
-     */
-    function shownLyrs(lyrs) {
-        // Pass in the Array from the root LayerGroup as it doesn't have a
-        // title but we don't want to filter out all layers
-        lyrs = lyrs.getLayers().getArray();
-        var flat = flatten(lyrs, function (lyr) {
-            // Return a Groups layer array only if the group has a title
-            // otherwise just return the group so that it's children will be
-            // skipped
-            return (lyr.getLayers && lyr.get('title')) ? lyr.getLayers().getArray() : lyr;
-        });
-        // Only return layers with a title
-        return _.filter(flat, lyrTitle);
-    }
-
-    /**
-     * Flattens a given nested collection using the provided function getArray
-     * to get an Array of the collections children.
-     */
-    function flatten(srcCollection, getArray) {
-        getArray = getArray || function (item) {return item};
-        var src = getArray(srcCollection),
-            dest = [];
-        for (var i = 0, item; i < src.length; i++) {
-            item = src[i];
-            dest = dest.concat(item);
-            if (_.isArray(getArray(item))) {
-                dest = dest.concat(flatten(item, getArray));
-            }
-        }
-        return dest;
-    }
 
 });

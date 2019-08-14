@@ -3,18 +3,11 @@
         target: 'map',
         layers: [
             new ol.layer.Group({
-                // A layer must have a title to appear in the layerswitcher
                 'title': 'Base maps',
                 layers: [
                     new ol.layer.Group({
-                        // A layer must have a title to appear in the layerswitcher
                         title: 'Water color with labels',
-                        // Setting the layers type to 'base' results
-                        // in it having a radio button and only one
-                        // base layer being visibile at a time
                         type: 'base',
-                        // Setting combine to true causes sub-layers to be hidden
-                        // in the layerswitcher, only the parent is shown
                         combine: true,
                         visible: false,
                         layers: [
@@ -31,9 +24,7 @@
                         ]
                     }),
                     new ol.layer.Tile({
-                        // A layer must have a title to appear in the layerswitcher
                         title: 'Water color',
-                        // Again set this layer as a base layer
                         type: 'base',
                         visible: false,
                         source: new ol.source.Stamen({
@@ -41,9 +32,7 @@
                         })
                     }),
                     new ol.layer.Tile({
-                        // A layer must have a title to appear in the layerswitcher
                         title: 'OSM',
-                        // Again set this layer as a base layer
                         type: 'base',
                         visible: true,
                         source: new ol.source.OSM()
@@ -51,14 +40,10 @@
                 ]
             }),
             new ol.layer.Group({
-                // A layer must have a title to appear in the layerswitcher
                 title: 'Overlays',
-                // Adding a 'fold' property set to either 'open' or 'close' makes the group layer
-                // collapsible
                 fold: 'open',
                 layers: [
                     new ol.layer.Image({
-                        // A layer must have a title to appear in the layerswitcher
                         title: 'Countries',
                         source: new ol.source.ImageArcGISRest({
                             ratio: 1,
@@ -67,12 +52,10 @@
                         })
                     }),
                     new ol.layer.Group({
-                        // A layer must have a title to appear in the layerswitcher
                         title: 'Census',
                         fold: 'open',
                         layers: [
                             new ol.layer.Image({
-                                // A layer must have a title to appear in the layerswitcher
                                 title: 'Districts',
                                 source: new ol.source.ImageArcGISRest({
                                     ratio: 1,
@@ -81,9 +64,7 @@
                                 })
                             }),
                             new ol.layer.Image({
-                                // A layer must have a title to appear in the layerswitcher
                                 title: 'Wards',
-                                visible: false,
                                 source: new ol.source.ImageArcGISRest({
                                     ratio: 1,
                                     params: {'LAYERS': 'show:0'},
@@ -96,15 +77,49 @@
             })
         ],
         view: new ol.View({
-            center: ol.proj.transform([-0.92, 52.96], 'EPSG:4326', 'EPSG:3857'),
-            zoom: 6
+            center: ol.proj.transform([-2.284, 55.692], 'EPSG:4326', 'EPSG:3857'),
+            zoom: 9
         })
     });
 
     var layerSwitcher = new ol.control.LayerSwitcher({
-        tipLabel: 'Légende', // Optional label for button
         groupSelectStyle: 'children' // Can be 'children' [default], 'group' or 'none'
     });
     map.addControl(layerSwitcher);
+
+    // Add a select input to allow setting the groupSelectStyle style
+
+    function createOption(name) {
+        var option = document.createElement("option");
+        option.value = name;
+        option.text = name;
+        return option;
+    }
+
+    var container = document.createElement('div');
+    container.id = 'group-select-style';
+
+    var label = document.createElement('label');
+    label.innerText = 'groupSelectStyle: ';
+    label.htmlFor = 'group-select-style-input';
+
+    var select = document.createElement('select');
+    select.id = 'group-select-style-input';
+    select.add(createOption('children'));
+    select.add(createOption('group'));
+    select.add(createOption('none'));
+
+    select.onchange = function(e) {
+        map.removeControl(layerSwitcher);
+        layerSwitcher = new ol.control.LayerSwitcher({
+            groupSelectStyle: select.value
+        });
+        map.addControl(layerSwitcher);
+    };
+
+    container.appendChild(label);
+    container.appendChild(select);
+
+    document.body.appendChild(container);
 
 })();
